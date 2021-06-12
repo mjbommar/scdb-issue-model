@@ -10,7 +10,8 @@ import pandas
 import requests
 import zipfile
 
-REQUESTS_CHUNK_SIZE = 2**16
+REQUESTS_CHUNK_SIZE = 2 ** 16
+
 
 def get_data_url(base_url: str, court: str, data_type: str) -> str:
     """
