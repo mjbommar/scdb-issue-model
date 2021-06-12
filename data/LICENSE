@@ -1,0 +1,18 @@
+-- SCDB --
+
+Upon execution of `scripts/download_scdb.py`, this folder will contain a copy of information from the Supreme Court
+Database project, currently hosted by Washington University Law at the Washington University in St. Louis.
+
+More information about this project can be found at their website here: http://scdb.wustl.edu/about.php
+
+A codebook describing all fields in the database can be found on the site.  For example, the codebook for the 2020
+Release 1 database can be found here: http://scdb.wustl.edu/_brickFiles/2020_01/SCDB_2020_01_codebook.pdf
+
+SCDB was supported in part by US National Science Foundation grants, but users should review their use case and the
+SCDB site.
+
+-- CourtListener --
+
+Upon execution of `scripts/download_courtlistener.py`, this folder will contain a copy of information from CourtListener
+provided by the Free Law Project.  You should review the terms of service and copyright policy here:
+https://www.courtlistener.com/terms/
