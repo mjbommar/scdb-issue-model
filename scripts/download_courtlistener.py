@@ -62,7 +62,7 @@ if __name__ == "__main__":
     print(f"downloading court={args.court}, data_type={args.data_type} from {url}")
 
     # setup output file name
-    output_file_extension = os.path.splitext(url)[1].lstrip('.')
+    output_file_extension = ".tar.gz" if url.endswith(".tar.gz") else ".tar"
     output_file_name = f"{args.court}_{args.data_type}.{output_file_extension}"
     if os.path.exists(os.path.join(args.path, output_file_name)):
         raise RuntimeError(f"{output_file_name} already exists; please delete if you would like to re-download")
