@@ -117,6 +117,6 @@ if __name__ == "__main__":
     feature_df = pandas.DataFrame(feature_vector_list, index=doc_label_list)
     target_series = pandas.Series(target_list, index=doc_label_list, name=args.target_name)
     feature_df.to_csv(os.path.join(args.path,
-                                   f"features-{args.vector_type}-{args.court}-{args.data_type}-{args.year}-{args.release}.csv"))
+                                   f"features-{args.vector_type}-{args.court}-{args.data_type}-{args.year}-{args.release}.csv.gz"))
     target_series.to_csv(
-        os.path.join(args.path, f"targets-{args.court}-{args.data_type}-{args.year}-{args.release}.csv"))
+        os.path.join(args.path, f"targets-{args.court}-{args.data_type}-{args.year}-{args.release}.csv.gz"))
