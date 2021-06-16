@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     if args.vector_type == "spacy-en-large":
         nlp = spacy.load("en_core_web_lg")
-    elif args.vector_type == "spacy-en-trf":
+    elif args.vector_type in ["spacy-en-trf-mean", "spacy-en-trf-sum"]:
         nlp = spacy.load("en_core_web_trf")
     else:
         raise NotImplementedError(f"vector_type={args.vector_type} is not available; see README")
@@ -110,8 +110,10 @@ if __name__ == "__main__":
             # handle feature
             if args.vector_type == "spacy-en-large":
                 feature_vector_list.append(file_doc.vector)
-            elif args.vector_type == "spacy-en-trf":
-                feature_vector_list.append(file_doc._.trf_data.tensors[1].mean(axis=0))
+            elif args.vector_type == "spacy-en-trf-mean":
+                feature_vector_list.append(file_doc._.trf_data.tensors[-1].mean(axis=0))
+            elif args.vector_type == "spacy-en-trf-sum":
+                feature_vector_list.append(file_doc._.trf_data.tensors[-1].sum(axis=0))
 
     # save outputs
     feature_df = pandas.DataFrame(feature_vector_list, index=doc_label_list)
