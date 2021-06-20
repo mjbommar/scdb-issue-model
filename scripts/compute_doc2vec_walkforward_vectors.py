@@ -40,6 +40,10 @@ if __name__ == "__main__":
                             help="SCDB record type; case or justice")
     arg_parser.add_argument("--grouping", type=str, required=False, default="Citation",
                             help="SCDB grouping type (CASE SENSITIVE); Citation, Docket, LegalProvision, or Vote")
+    arg_parser.add_argument("--start_year", type=int, required=False, default=None,
+                            help="first year to use for training")
+    arg_parser.add_argument("--end_year", type=int, required=False, default=None,
+                            help="first year to use for training")
     arg_parser.add_argument("--path", type=str, required=False, default="data", help="path to files")
 
     # get args and handle defaults
@@ -58,23 +62,61 @@ if __name__ == "__main__":
         os.path.join(args.path, f"map-{args.year}_{args.release}-{args.court}_{args.data_type}.csv"),
         encoding="utf-8", index_col=0)
 
-    # load d2v model
-    doc2vec_file_name = os.path.join(args.path,
-                                     f"doc2vec-{args.vector_size}-{args.window_size}-{args.dm}-{args.min_count}")
-    if not os.path.exists(doc2vec_file_name):
-        raise RuntimeError(f"doc2vec model {doc2vec_file_name} does not exist")
-    doc2vec_model = gensim.models.doc2vec.Doc2Vec.load(doc2vec_file_name)
+    # get reverse mapping for lookup by year
+    good_cl_scdb_df = cl_scdb_df[-pandas.isnull(cl_scdb_df['scdb_case_id'])]
+    scdb_cl_dict = dict(list(zip(good_cl_scdb_df.loc[:, 'scdb_case_id'], good_cl_scdb_df.index)))
 
-    # iterate through tar file records
+    # get start and end years
+    if args.start_year is None:
+        start_year = scdb_df.loc[:, "yearDecided"].min()
+    else:
+        start_year = args.start_year
+
+    if args.end_year is None:
+        end_year = scdb_df.loc[:, "yearDecided"].max()
+    else:
+        end_year = args.end_year
+
+    # get tar file name
     input_file_name = os.path.join(args.path, f"{args.court}_{args.data_type}.tar.gz")
-    doc_vector_list = []
-    doc_name_list = []
+
+    # read all documents from tarball
+    document_token_list = []
+    document_label_list = []
     for doc_tokens, doc_name in TarTokenExtractor(input_file_name, return_member=True, sample_size=args.sample_size):
         member_id = int(doc_name.replace('.json', ''))
-        doc_vector_list.append(doc2vec_model.infer_vector(doc_tokens))
-        doc_name_list.append(cl_scdb_df.loc[member_id, 'scdb_case_id'])
+        if not pandas.isnull(cl_scdb_df.loc[member_id]).any():
+            document_token_list.append(doc_tokens)
+            document_label_list.append(member_id)
+
+    # iterate over years, load each model, and store results
+    doc_vector_list = []
+    doc_name_list = []
+    walkforward_path = os.path.join(args.path,
+                                    f"doc2vec-{args.vector_size}-{args.window_size}-{args.dm}-{args.min_count}-walkforward")
+
+    for year in range(start_year, end_year + 1):
+        # get current year cases
+        year_case_index = scdb_df.index[scdb_df.loc[:, "yearDecided"] == year]
+        year_document_index = [i for i in range(len(document_label_list))
+                               if scdb_df.loc[
+                                   cl_scdb_df.loc[document_label_list[i], 'scdb_case_id'], 'yearDecided'] == year]
+
+        print(year, len(year_document_index))
+        if len(year_document_index) == 0:
+            continue
+
+        # load model
+        year_doc2vec_path = os.path.join(walkforward_path, f"{year}")
+        if not os.path.exists(year_doc2vec_path):
+            raise RuntimeError(f"doc2vec model {year_doc2vec_path} does not exist")
+        year_doc2vec_model = gensim.models.doc2vec.Doc2Vec.load(year_doc2vec_path)
+
+        for i in year_document_index:
+            doc_vector_list.append(year_doc2vec_model.infer_vector(document_token_list[i]))
+            doc_name_list.append(cl_scdb_df.loc[document_label_list[i], 'scdb_case_id'])
 
     # output feature data
     doc_vector_df = pandas.DataFrame(doc_vector_list, index=doc_name_list)
     doc_vector_df.to_csv(os.path.join(args.path,
-                                      f"features-doc2vec-{args.vector_size}-{args.window_size}-{args.dm}-{args.min_count}-{args.court}-{args.data_type}-{args.year}-{args.release}.csv.gz"))
+                                      f"features-doc2vec-walkforward-{args.vector_size}-{args.window_size}-{args.dm}-{args.min_count}-{args.court}-{args.data_type}-{args.year}-{args.release}.csv.gz"))

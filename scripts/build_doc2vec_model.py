@@ -26,6 +26,8 @@ if __name__ == "__main__":
                             help="doc2vec training epoch count")
     arg_parser.add_argument("--min_count", type=int, required=False, default=10,
                             help="doc2vec vocabulary min count")
+    arg_parser.add_argument("--seed", type=int, required=False, default=None,
+                            help="doc2vec training seed")
     arg_parser.add_argument("--sample_size", type=int, required=False, default=None,
                             help="number of opinions to use for model training")
 
@@ -53,7 +55,8 @@ if __name__ == "__main__":
                                                   dm=args.dm,
                                                   alpha=args.alpha,
                                                   epochs=args.epochs,
-                                                  min_count=args.min_count)
+                                                  min_count=args.min_count,
+                                                  seed=args.seed)
     output_file_name = os.path.join(args.path,
                                     f"doc2vec-{args.vector_size}-{args.window_size}-{args.dm}-{args.min_count}")
     print(f"writing d2v model to {output_file_name}")
