@@ -73,6 +73,9 @@ if __name__ == "__main__":
                 scdb_id_match = None
 
                 for case_cite in file_html.xpath("//p[@class='case_cite']"):
+                    if case_cite.text is None:
+                        continue
+                    
                     if ' U.S. ' in case_cite.text:
                         scdb_match_records = scdb_df.loc[scdb_df.loc[:, 'usCite'] == case_cite.text, :]
                         if scdb_match_records.shape[0] == 0:
@@ -80,7 +83,7 @@ if __name__ == "__main__":
                         elif scdb_match_records.shape[0] > 1:
                             print(f"multiple matching records for {case_cite.text}")
                         else:
-                            scdb_id_match = scdb_match_records.iloc[0]['caseId']
+                            scdb_id_match = scdb_match_records.index[0]
                     elif 'S. Ct. ' in case_cite.text:
                         scdb_match_records = scdb_df.loc[scdb_df.loc[:, 'sctCite'] == case_cite.text, :]
                         if scdb_match_records.shape[0] == 0:
@@ -88,7 +91,7 @@ if __name__ == "__main__":
                         elif scdb_match_records.shape[0] > 1:
                             print(f"multiple matching records for {case_cite.text}")
                         else:
-                            scdb_id_match = scdb_match_records.iloc[0]['caseId']
+                            scdb_id_match = scdb_match_records.index[0]
                     elif 'L. Ed. ' in case_cite.text:
                         scdb_match_records = scdb_df.loc[scdb_df.loc[:, 'ledCite'] == case_cite.text, :]
                         if scdb_match_records.shape[0] == 0:
@@ -96,7 +99,7 @@ if __name__ == "__main__":
                         elif scdb_match_records.shape[0] > 1:
                             print(f"multiple matching records for {case_cite.text}")
                         else:
-                            scdb_id_match = scdb_match_records.iloc[0]['caseId']
+                            scdb_id_match = scdb_match_records.index[0]
 
                 if scdb_id_match is not None:
                     cl_scdb_mapping[member_id] = scdb_id_match
@@ -104,6 +107,7 @@ if __name__ == "__main__":
                     cl_scdb_mapping[member_id] = None
 
             except Exception as e:
+                raise e
                 print(f"unable to parse {member.name}['html'] as HTML", e)
                 cl_scdb_mapping[member_id] = None
 
